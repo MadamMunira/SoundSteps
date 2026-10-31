@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SoundSteps — Huruf a Sekolah</title>
+<style>
+:root{font-family:system-ui,-apple-system,Arial,sans-serif;color:#153255;background:#eff5ff}*{box-sizing:border-box}body{margin:0;padding:20px}main{max-width:520px;margin:12px auto;background:white;border-radius:22px;padding:24px 20px;box-shadow:0 8px 25px #16355b16}header{text-align:center}h1{margin:6px 0;color:#2359bf;font-size:2.1rem}h2{font-size:1.25rem}p{line-height:1.5}.muted{color:#63748b}.wordlist{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:16px 0 22px}.word{font-size:2rem;font-weight:700;background:#e8f0ff;color:#1f56af;padding:12px 17px;border-radius:14px;display:inline-flex;align-items:baseline;justify-content:center;gap:0;line-height:1.2}.school-a{width:.63em;height:.84em;align-self:baseline;display:inline-block;vertical-align:baseline}.school-a circle,.school-a path{stroke:currentColor;fill:none;stroke-width:7;stroke-linecap:round;stroke-linejoin:round}button{font:inherit;font-weight:700;min-height:49px;border:0;border-radius:13px;padding:12px 16px;cursor:pointer;touch-action:manipulation}button:disabled{opacity:.45;cursor:not-allowed}.primary{background:#235bc5;color:white}.secondary{background:#e7eefb;color:#1d4c9d}.danger{background:#bd3346;color:white}.controls{display:grid;grid-template-columns:1fr 1fr;gap:10px}.controls #record{grid-column:1/-1}.status{background:#f2f5fa;border-radius:12px;padding:12px;margin:16px 0;font-size:.92rem}audio{width:100%;margin:12px 0}.notice{background:#fff6e4;padding:12px;border-radius:12px;color:#704f0a;font-size:.9rem}.hidden{display:none}.foot{font-size:.84rem;color:#63748b;margin-top:22px}a{color:#235bc5}
+</style>
+</head>
+<body><main>
+<header><div aria-hidden="true" style="font-size:2.5rem">📖</div><h1>SoundSteps</h1><div class="muted">Early Reading Approach</div></header>
+<section><h2>Word Family –ab</h2><p class="muted" style="font-size:.9rem">Lowercase a uses the single-storey shape taught in early handwriting.</p><p>Read these words aloud. Then record your reading.</p><div class="wordlist" aria-label="Reading words"><span class="word" aria-label="cab"><span aria-hidden="true">c</span><svg class="school-a" viewBox="0 0 56 70" aria-hidden="true"><circle cx="24" cy="40" r="18"/><path d="M42 22V58"/></svg><span aria-hidden="true">b</span></span><span class="word" aria-label="tab"><span aria-hidden="true">t</span><svg class="school-a" viewBox="0 0 56 70" aria-hidden="true"><circle cx="24" cy="40" r="18"/><path d="M42 22V58"/></svg><span aria-hidden="true">b</span></span><span class="word" aria-label="lab"><span aria-hidden="true">l</span><svg class="school-a" viewBox="0 0 56 70" aria-hidden="true"><circle cx="24" cy="40" r="18"/><path d="M42 22V58"/></svg><span aria-hidden="true">b</span></span><span class="word" aria-label="dab"><span aria-hidden="true">d</span><svg class="school-a" viewBox="0 0 56 70" aria-hidden="true"><circle cx="24" cy="40" r="18"/><path d="M42 22V58"/></svg><span aria-hidden="true">b</span></span><span class="word" aria-label="jab"><span aria-hidden="true">j</span><svg class="school-a" viewBox="0 0 56 70" aria-hidden="true"><circle cx="24" cy="40" r="18"/><path d="M42 22V58"/></svg><span aria-hidden="true">b</span></span></div></section>
+<section><h2>🎙️ Record & Listen</h2><div class="controls"><button id="record" class="primary" type="button">● Start Recording</button><button id="stop" class="danger" type="button" disabled>■ Stop</button><button id="listen" class="secondary" type="button" disabled>▶ Listen</button></div><div class="status" id="status" role="status" aria-live="polite">Ready. Tap Start Recording and allow microphone access.</div><audio id="player" class="hidden" controls playsinline></audio><a id="save" class="hidden" download="SoundSteps-ab-reading.webm">Download recording</a></section>
+<p class="notice" id="notice">📱 On iPhone/iPad, microphone recording usually works only when this page is opened on a secure HTTPS website (not directly as a downloaded HTML file or inside ChatGPT's file preview). The first version is for testing only.</p>
+<p class="foot">No AI scoring. Your recording is kept in this page temporarily and is not uploaded. Closing or refreshing the page may erase it. Do not record pupils before obtaining appropriate permission.</p>
+</main>
+<script>
+(()=>{
+'use strict';
+const $=id=>document.getElementById(id);
+const record=$('record'), stop=$('stop'), listen=$('listen'), player=$('player'), status=$('status'), save=$('save');
+let recorder=null, stream=null, chunks=[], url=null;
+function tell(message){status.textContent=message}
+function endTracks(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}}
+function resetOld(){if(url){URL.revokeObjectURL(url);url=null}player.removeAttribute('src');player.load();player.classList.add('hidden');save.classList.add('hidden');listen.disabled=true}
+record.addEventListener('click',async()=>{
+ if(!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){tell('Microphone unavailable here. Open this page through an HTTPS website in Safari or Chrome. A downloaded HTML file may not work.');return}
+ if(!window.MediaRecorder){tell('This browser does not support audio recording. Try an updated Safari or Chrome.');return}
+ record.disabled=true;resetOld();tell('Requesting microphone permission…');
+ try{
+  stream=await navigator.mediaDevices.getUserMedia({audio:true});
+  const types=['audio/mp4','audio/webm;codecs=opus','audio/webm'];
+  const type=types.find(t=>MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t));
+  recorder=type?new MediaRecorder(stream,{mimeType:type}):new MediaRecorder(stream);
+  chunks=[];
+  recorder.ondataavailable=e=>{if(e.data && e.data.size)chunks.push(e.data)};
+  recorder.onerror=()=>{tell('Recording error. Please try again.');endTracks();record.disabled=false;stop.disabled=true};
+  recorder.onstop=()=>{
+   endTracks();stop.disabled=true;record.disabled=false;
+   if(!chunks.length){tell('No audio recorded. Please try again.');return}
+   const mime=recorder.mimeType||'audio/webm';
+   url=URL.createObjectURL(new Blob(chunks,{type:mime}));
+   player.src=url;player.classList.remove('hidden');listen.disabled=false;
+   save.href=url;save.download='SoundSteps-ab-reading.'+(mime.includes('mp4')?'m4a':'webm');save.classList.remove('hidden');
+   tell('Recording saved temporarily. Tap Listen to play it back.');
+  };
+  recorder.start();stop.disabled=false;tell('🔴 Recording… Read: cab, tab, lab, dab, jab. Then tap Stop.');
+ }catch(e){endTracks();record.disabled=false;stop.disabled=true;tell(e.name==='NotAllowedError'?'Microphone permission denied. Allow microphone access in browser settings, then try again.':'Could not start recording: '+(e.message||'please try another browser.'))}
+});
+stop.addEventListener('click',()=>{if(recorder && recorder.state!=='inactive'){stop.disabled=true;tell('Finishing recording…');recorder.stop()}});
+listen.addEventListener('click',async()=>{if(!player.src)return;try{player.currentTime=0;await player.play();tell('▶ Playing your recording.')}catch(e){tell('Playback blocked. Try the play control below.')}});
+window.addEventListener('pagehide',endTracks);
+})();
+</script>
+</body></html>
